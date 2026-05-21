@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_call: # reused by release.yml to gate releases on a green build
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Discover every Go module (root + each contrib) so jobs auto-adapt when a
+  # new contrib module is added — no hardcoded list to maintain.
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      modules: ${{ steps.list.outputs.modules }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: list
+        run: |
+          mods=$(find . -name go.mod -not -path '*/vendor/*' -printf '%h\n' \
+            | sort | jq -R . | jq -cs .)
+          echo "modules=$mods" >> "$GITHUB_OUTPUT"
+          echo "$mods"
+
+  test:
+    needs: discover
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        module: ${{ fromJSON(needs.discover.outputs.modules) }}
+    name: test (${{ matrix.module }})
+    env:
+      # Build each module in isolation via its own go.mod (+ replace directive),
+      # exactly as an external consumer would — validates module independence.
+      GOWORK: "off"
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.25"
+          cache-dependency-path: ${{ matrix.module }}/go.sum
+      - name: gofmt
+        working-directory: ${{ matrix.module }}
+        run: |
+          out=$(gofmt -l .)
+          if [ -n "$out" ]; then
+            echo "::error::gofmt needed:"; echo "$out"; exit 1
+          fi
+      - name: go vet
+        working-directory: ${{ matrix.module }}
+        run: go vet ./...
+      - name: go build
+        working-directory: ${{ matrix.module }}
+        run: go build ./...
+      - name: go test -race
+        working-directory: ${{ matrix.module }}
+        run: go test -race ./...
