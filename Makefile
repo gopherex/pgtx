@@ -97,7 +97,7 @@ release:
 	  mapfile -t TAGS < <(tags_for "$$new")
 	  echo
 	  echo "Release v$$new — will:"
-	  echo "  - set 'require $(ROOT_MODULE) v$$new' in every contrib go.mod"
+	  echo "  - set 'require $(ROOT_MODULE) v$$new' in contrib go.mod that depend on it"
 	  echo "  - commit 'release v$$new'"
 	  echo "  - create $${#TAGS[@]} tags and push"
 	  read -r -p "Type 'yes' to proceed: " ok
@@ -105,7 +105,13 @@ release:
 
 	  for d in $$mods; do
 	    [ "$$d" = "." ] && continue
-	    ( cd "$$d" && go mod edit -require=$(ROOT_MODULE)@v$$new )
+	    # Only re-pin contrib modules that actually depend on the root module
+	    # (have a require entry for it). Independent modules — e.g. an otel
+	    # integration that imports pgx/otel but not the root — must NOT gain a
+	    # phantom require: with no replace+go.sum entry it breaks CI (GOWORK=off).
+	    if grep -qE "[[:space:]]$(ROOT_MODULE) v[0-9]" "$$d/go.mod"; then
+	      ( cd "$$d" && go mod edit -require=$(ROOT_MODULE)@v$$new )
+	    fi
 	  done
 	  git add -A
 	  git diff --cached --quiet || git commit -m "release v$$new"
