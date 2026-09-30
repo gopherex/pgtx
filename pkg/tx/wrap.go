@@ -4,6 +4,9 @@ import (
 	"context"
 
 	trmpgx "github.com/avito-tech/go-transaction-manager/pgxv5"
+	"github.com/avito-tech/go-transaction-manager/trm"
+	trmcontext "github.com/avito-tech/go-transaction-manager/trm/context"
+	"github.com/avito-tech/go-transaction-manager/trm/settings"
 	"github.com/jackc/pgx/v5"
 )
 
@@ -63,9 +66,25 @@ func Do(
 ) error {
 	cfg := newConfig(opts...)
 	setts := NewSettings(level, cfg.trmOpts...)
-	return runWithRetry(ctx, cfg.retry, func(ctx context.Context) error {
-		return trm.DoWithSettings(ctx, setts, fn)
-	})
+	run := func(ctx context.Context) error { return trm.DoWithSettings(ctx, setts, fn) }
+	// A call inside an open transaction joins it (or opens a savepoint in
+	// it): after a failed statement the whole transaction is aborted, so only
+	// the outermost call may run it again. Retrying here would re-run fn in
+	// the aborted transaction ("current transaction is aborted").
+	if inTransaction(ctx, setts) {
+		return run(ctx)
+	}
+	return runWithRetry(ctx, cfg.retry, run)
+}
+
+// inTransaction reports whether ctx carries an open transaction under the
+// settings' context key (the default key when the call sets none).
+func inTransaction(ctx context.Context, s *trmpgx.Settings) bool {
+	var key trm.CtxKey = settings.DefaultCtxKey
+	if k := s.CtxKeyOrNil(); k != nil {
+		key = *k
+	}
+	return trmcontext.DefaultManager.ByKey(ctx, key) != nil
 }
 
 func DoSettings(
