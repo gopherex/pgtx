@@ -41,6 +41,17 @@ jobs:
       # Build each module in isolation via its own go.mod (+ replace directive),
       # exactly as an external consumer would — validates module independence.
       GOWORK: "off"
+      PGTX_TEST_PG: postgres://pgtx:pgtx@localhost:5432/pgtx?sslmode=disable
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: pgtx
+          POSTGRES_PASSWORD: pgtx
+          POSTGRES_DB: pgtx
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U pgtx" --health-interval 2s --health-timeout 2s --health-retries 15
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-go@v6

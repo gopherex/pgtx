@@ -3,7 +3,8 @@ module github.com/gopherex/pgtx
 go 1.25.0
 
 require (
-	github.com/avito-tech/go-transaction-manager v1.5.1
+	github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2 v2.0.5
+	github.com/avito-tech/go-transaction-manager/trm/v2 v2.0.5
 	github.com/jackc/pgx/v5 v5.9.2
 )
 

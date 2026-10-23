@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/avito-tech/go-transaction-manager/trm"
-	trmcontext "github.com/avito-tech/go-transaction-manager/trm/context"
-	"github.com/avito-tech/go-transaction-manager/trm/settings"
+	"github.com/avito-tech/go-transaction-manager/trm/v2"
+	trmcontext "github.com/avito-tech/go-transaction-manager/trm/v2/context"
+	"github.com/avito-tech/go-transaction-manager/trm/v2/settings"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )

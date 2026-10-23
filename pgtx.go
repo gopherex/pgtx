@@ -3,8 +3,8 @@ package pgtx
 import (
 	"fmt"
 
-	trmpgx "github.com/avito-tech/go-transaction-manager/pgxv5"
-	"github.com/avito-tech/go-transaction-manager/trm/manager"
+	trmpgx "github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2"
+	"github.com/avito-tech/go-transaction-manager/trm/v2/manager"
 	"github.com/gopherex/pgtx/pkg/tx"
 	"github.com/jackc/pgx/v5/pgxpool"
 )

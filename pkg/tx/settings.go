@@ -1,8 +1,8 @@
 package tx
 
 import (
-	trmpgx "github.com/avito-tech/go-transaction-manager/pgxv5"
-	"github.com/avito-tech/go-transaction-manager/trm/settings"
+	trmpgx "github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2"
+	"github.com/avito-tech/go-transaction-manager/trm/v2/settings"
 	"github.com/jackc/pgx/v5"
 )
 

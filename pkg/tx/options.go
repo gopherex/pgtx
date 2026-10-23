@@ -6,7 +6,7 @@ import (
 	"math/rand/v2"
 	"time"
 
-	"github.com/avito-tech/go-transaction-manager/trm/settings"
+	"github.com/avito-tech/go-transaction-manager/trm/v2/settings"
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
@@ -90,7 +90,7 @@ type expBackoff struct {
 
 func (b *expBackoff) Next() (time.Duration, bool) {
 	d := b.base << b.attempt //nolint:gosec // attempt bounded by MaxAttempts
-	if d < b.base {           // overflow guard
+	if d < b.base {          // overflow guard
 		d = b.maxDelay
 	}
 	if b.maxDelay > 0 && d > b.maxDelay {

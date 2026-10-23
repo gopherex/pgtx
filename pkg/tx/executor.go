@@ -3,7 +3,7 @@ package tx
 import (
 	"context"
 
-	trmpgx "github.com/avito-tech/go-transaction-manager/pgxv5"
+	trmpgx "github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 )

@@ -4,7 +4,9 @@
 
 Transaction management for Go + PostgreSQL, built on
 [`pgx/v5`](https://github.com/jackc/pgx) and
-[`avito-tech/go-transaction-manager`](https://github.com/avito-tech/go-transaction-manager).
+[`avito-tech/go-transaction-manager`](https://github.com/avito-tech/go-transaction-manager) v2.
+A transaction whose context ends is rolled back and its connection returned
+to the pool (v1 left it acquired forever).
 
 A `Trm` manager owns transaction boundaries; a context-aware `DB` executor
 transparently routes queries to the active transaction (or the pool when there
