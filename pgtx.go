@@ -10,13 +10,15 @@ import (
 )
 
 // NewTxManager creates TX manager with pgxpool.Pool.
-// Put constructor for TX manage here since manager depends on pgx5 driver
+// Put constructor for TX manage here since manager depends on pgx5 driver.
+// Transactions it begins are guarded against concurrent use (tx.ErrTxInUse);
+// the pool path stays fully concurrent.
 func NewTxManager(
 	pool *pgxpool.Pool,
 	settings *trmpgx.Settings,
 ) (tx.Trm, error) {
 	m, err := manager.New(
-		trmpgx.NewDefaultFactory(pool),
+		tx.GuardedFactory(pool),
 		manager.WithSettings(settings),
 	)
 	if err != nil {

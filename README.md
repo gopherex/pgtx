@@ -16,7 +16,7 @@ level and return its result.
 
 ```text
 pgtx/                 NewTxManager / NewTxDB constructors (single pgtx.go)
-pkg/tx/               Trm, DB, executor, settings, Do* isolation helpers
+pkg/tx/               Trm, DB, executor, settings, Do* helpers, tx concurrency guard
 contrib/otel/         pgxpool → OpenTelemetry metrics (its own go.mod)
 ```
 
@@ -47,6 +47,20 @@ user, err := tx.DoSerializableRet(ctx, mgr, func(ctx context.Context) (User, err
 
 Isolation-level helpers: `tx.Serializable`, `tx.RepeatableRead`,
 `tx.ReadCommitted`, `tx.ReadUncommitted`, plus the `Do*` / `Do*Ret` runners.
+
+## Transaction concurrency guard
+
+`pgx.Tx` does not allow two statements on one transaction at the same time:
+a goroutine spawned with the transaction context (errgroup and friends)
+would otherwise hit a busy-conn or protocol error that does not name the
+cause. Every transaction begun by `NewTxManager` is therefore guarded:
+while a call still holds the transaction — its `Rows` are not drained or
+closed, its `Row` is not scanned, its `BatchResults` are not closed — every
+other call routed into it, at any savepoint level, is refused with
+`tx.ErrTxInUse` before reaching pgx. A refusal never damages the
+transaction: it stays usable. Sequential code, nested savepoints and the
+pool path outside transactions are untouched — pool access stays fully
+concurrent, the guard costs ~15 ns per statement.
 
 ## OpenTelemetry metrics
 
