@@ -22,7 +22,7 @@ import (
 type stubTx struct {
 	execs     atomic.Int64
 	queries   atomic.Int64
-	execBlock chan struct{}  // when non-nil, Exec waits here
+	execBlock chan struct{} // when non-nil, Exec waits here
 	started   chan struct{} // buffered, cap 1: signalled on entry to a blocked Exec
 	err       error         // every call that can fail returns it
 	rows      pgx.Rows      // non-nil: Query returns them instead of a fresh set
@@ -108,9 +108,9 @@ type stubRows struct {
 
 var _ pgx.Rows = (*stubRows)(nil)
 
-func (r *stubRows) Close() { r.closed = true }
-func (r *stubRows) Err() error { return r.scanErr }
-func (r *stubRows) CommandTag() pgconn.CommandTag { return pgconn.CommandTag{} }
+func (r *stubRows) Close()                                       { r.closed = true }
+func (r *stubRows) Err() error                                   { return r.scanErr }
+func (r *stubRows) CommandTag() pgconn.CommandTag                { return pgconn.CommandTag{} }
 func (r *stubRows) FieldDescriptions() []pgconn.FieldDescription { return nil }
 
 func (r *stubRows) Next() bool {
@@ -164,7 +164,7 @@ var _ pgx.BatchResults = (*stubBatch)(nil)
 
 func (b *stubBatch) Exec() (pgconn.CommandTag, error) { return pgconn.CommandTag{}, nil }
 func (b *stubBatch) Query() (pgx.Rows, error)         { return &stubRows{}, nil }
-func (b *stubBatch) QueryRow() pgx.Row               { return &stubRow{} }
+func (b *stubBatch) QueryRow() pgx.Row                { return &stubRow{} }
 
 func (b *stubBatch) Close() error {
 	b.closed = true
