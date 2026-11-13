@@ -6,19 +6,22 @@ import (
 	trmpgx "github.com/avito-tech/go-transaction-manager/drivers/pgxv5/v2"
 	"github.com/avito-tech/go-transaction-manager/trm/v2/manager"
 	"github.com/gopherex/pgtx/pkg/tx"
-	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// NewTxManager creates TX manager with pgxpool.Pool.
+// NewTxManager creates a TX manager that begins every top-level transaction
+// through db: a *pgxpool.Pool, or a wrapper in front of one (for example a
+// bounded acquire that turns a pool timeout into a typed error — that error
+// reaches the caller of Do unchanged). Nested transactions are savepoints on
+// their parent and never call db.
 // Put constructor for TX manage here since manager depends on pgx5 driver.
 // Transactions it begins are guarded against concurrent use (tx.ErrTxInUse);
 // the pool path stays fully concurrent.
 func NewTxManager(
-	pool *pgxpool.Pool,
+	db trmpgx.Transactional,
 	settings *trmpgx.Settings,
 ) (tx.Trm, error) {
 	m, err := manager.New(
-		tx.GuardedFactory(pool),
+		tx.GuardedFactory(db),
 		manager.WithSettings(settings),
 	)
 	if err != nil {

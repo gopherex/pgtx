@@ -35,6 +35,10 @@ mgr, err := pgtx.NewTxManager(pool, tx.Serializable())
 if err != nil {
     return err
 }
+// NewTxManager takes any trmpgx.Transactional (BeginTx): a *pgxpool.Pool, or a
+// wrapper in front of it, e.g. a bounded acquire returning a typed timeout
+// error. Every top-level transaction begins through it; nested ones are
+// savepoints on their parent.
 
 // context-aware executor: uses the in-context transaction when present
 db := pgtx.NewTxDB(trmpgx.DefaultCtxGetter)

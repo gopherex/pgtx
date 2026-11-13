@@ -17,13 +17,19 @@ import (
 	"github.com/gopherex/pgtx/pkg/tx"
 )
 
-func pgDB(t *testing.T) (tx.DB, tx.Trm) {
+// pgDSN returns the test database DSN, skipping the test without one.
+func pgDSN(t *testing.T) string {
 	t.Helper()
 	dsn := os.Getenv("PGTX_TEST_PG")
 	if dsn == "" {
 		t.Skip("PGTX_TEST_PG not set")
 	}
-	pool, err := pgxpool.New(t.Context(), dsn)
+	return dsn
+}
+
+func pgDB(t *testing.T) (tx.DB, tx.Trm) {
+	t.Helper()
+	pool, err := pgxpool.New(t.Context(), pgDSN(t))
 	if err != nil {
 		t.Fatal(err)
 	}
