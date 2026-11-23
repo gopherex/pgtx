@@ -62,7 +62,9 @@ while a call still holds the transaction — its `Rows` are not drained or
 closed, its `Row` is not scanned, its `BatchResults` are not closed — every
 other call routed into it, at any savepoint level, is refused with
 `tx.ErrTxInUse` before reaching pgx. A refusal never damages the
-transaction: it stays usable. Sequential code, nested savepoints and the
+transaction: it stays usable. A refused batch did not start a transaction,
+so its `BatchResults.Tx()` returns `nil` on pgx versions that expose it.
+Sequential code, nested savepoints and the
 pool path outside transactions are untouched — pool access stays fully
 concurrent, the guard costs ~15 ns per statement.
 

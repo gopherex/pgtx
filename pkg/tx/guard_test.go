@@ -12,6 +12,7 @@ import (
 	"github.com/avito-tech/go-transaction-manager/trm/v2/settings"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 // stubTx is a pgx.Tx stand-in mirroring the parts of pgx's real release
@@ -112,6 +113,7 @@ func (r *stubRows) Close()                                       { r.closed = tr
 func (r *stubRows) Err() error                                   { return r.scanErr }
 func (r *stubRows) CommandTag() pgconn.CommandTag                { return pgconn.CommandTag{} }
 func (r *stubRows) FieldDescriptions() []pgconn.FieldDescription { return nil }
+func (r *stubRows) TypeMap() *pgtype.Map                         { return pgtype.NewMap() }
 
 func (r *stubRows) Next() bool {
 	if r.closed {
@@ -165,6 +167,7 @@ var _ pgx.BatchResults = (*stubBatch)(nil)
 func (b *stubBatch) Exec() (pgconn.CommandTag, error) { return pgconn.CommandTag{}, nil }
 func (b *stubBatch) Query() (pgx.Rows, error)         { return &stubRows{}, nil }
 func (b *stubBatch) QueryRow() pgx.Row                { return &stubRow{} }
+func (b *stubBatch) Tx() pgx.Tx                       { return nil }
 
 func (b *stubBatch) Close() error {
 	b.closed = true
@@ -354,6 +357,15 @@ func TestGuardedRefusedResultsReportErr(t *testing.T) {
 	}
 	if err := res.Close(); !errors.Is(err, ErrTxInUse) {
 		t.Fatalf("batch Close err = %v, want ErrTxInUse", err)
+	}
+
+	switch batch := res.(type) {
+	case interface{ Tx() pgx.Tx }:
+		if batch.Tx() != nil {
+			t.Fatal("refused batch did not start a transaction")
+		}
+	default:
+		t.Fatal("refused batch must support the pgx BatchResults.Tx method")
 	}
 }
 

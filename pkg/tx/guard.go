@@ -236,3 +236,6 @@ func (r *batchError) Exec() (pgconn.CommandTag, error) { return pgconn.CommandTa
 func (r *batchError) Query() (pgx.Rows, error)         { return nil, r.err }
 func (r *batchError) QueryRow() pgx.Row                { return rowError{r.err} }
 func (r *batchError) Close() error                     { return r.err }
+
+// Tx is nil because a refused batch never reaches pgx and starts no transaction.
+func (r *batchError) Tx() pgx.Tx { return nil }
